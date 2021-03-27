@@ -86,7 +86,12 @@ class CQ extends CI_Model{
 		if ($postdata['worked'] != NULL) {
 			$cqBand = $this->getCQWorked($station_id, $postdata);
 			foreach ($cqBand as $line) {
-				$bandCq[$line->col_cqz][$line->col_band] = '<div class="alert-danger"><a href=\'javascript:displayCqContacts("' . str_replace("&", "%26", $line->col_cqz) . '","' . $line->col_band . '")\'>W</a></div>';
+				if ($postdata['band'] == 'SAT') {
+					$bandCq[$line->col_cqz]['SAT'] = '<div class="alert-danger"><a href=\'javascript:displayCqContacts("' . str_replace("&", "%26", $line->col_cqz) . '","' . $line->col_band . '")\'>W</a></div>';
+				} else {
+					$bandCq[$line->col_cqz][$line->col_band] = '<div class="alert-danger"><a href=\'javascript:displayCqContacts("' . str_replace("&", "%26", $line->col_cqz) . '","' . $line->col_band . '")\'>W</a></div>';
+				}
+
 				$cqZ[$line->col_cqz]['count']++;
 			}
 		}
@@ -94,7 +99,11 @@ class CQ extends CI_Model{
 		if ($postdata['confirmed'] != NULL) {
 			$cqBand = $this->getCQConfirmed($station_id, $postdata);
 			foreach ($cqBand as $line) {
-				$bandCq[$line->col_cqz][$line->col_band] = '<div class="alert-success"><a href=\'javascript:displayCqContacts("' . str_replace("&", "%26", $line->col_cqz) . '","' . $line->col_band . '")\'>C</a></div>';
+				if ($postdata['band'] == 'SAT') {
+					$bandCq[$line->col_cqz]['SAT'] = '<div class="alert-success"><a href=\'javascript:displayCqContacts("' . str_replace("&", "%26", $line->col_cqz) . '","' . $line->col_band . '")\'>C</a></div>';
+				} else {
+					$bandCq[$line->col_cqz][$line->col_band] = '<div class="alert-success"><a href=\'javascript:displayCqContacts("' . str_replace("&", "%26", $line->col_cqz) . '","' . $line->col_band . '")\'>C</a></div>';
+				}
 				$cqZ[$line->col_cqz]['count']++;
 			}
 		}
@@ -150,20 +159,22 @@ class CQ extends CI_Model{
 
 		$sql .= ")";
 
-		$sql .= " union SELECT distinct col_cqz, 'SAT' as col_band FROM " . $this->config->item('table_name') .
-			" thcv where station_id = " . $station_id . " and col_cqz <> ''";
+		if ($postdata['band'] == 'All') {
+			$sql .= " union SELECT distinct col_cqz, 'SAT' as col_band FROM " . $this->config->item('table_name') .
+				" thcv where station_id = " . $station_id . " and col_cqz <> ''";
 
-		$sql .= $this->addBandToQuery('SAT');
+			$sql .= $this->addBandToQuery('SAT');
 
-		$sql .= " and not exists (select 1 from " . $this->config->item('table_name') .
-			" where station_id = " . $station_id .
-			" and col_cqz = thcv.col_cqz and col_cqz <> '' ";
+			$sql .= " and not exists (select 1 from " . $this->config->item('table_name') .
+				" where station_id = " . $station_id .
+				" and col_cqz = thcv.col_cqz and col_cqz <> '' ";
 
-		$sql .= $this->addBandToQuery('SAT');
+			$sql .= $this->addBandToQuery('SAT');
 
-		$sql .= $this->addQslToQuery($postdata);
+			$sql .= $this->addQslToQuery($postdata);
 
-		$sql .= ")";
+			$sql .= ")";
+		}
 
 		$query = $this->db->query($sql);
 		return $query->result();
@@ -181,12 +192,14 @@ class CQ extends CI_Model{
 
 		$sql .= $this->addQslToQuery($postdata);
 
-		$sql .= " union SELECT distinct col_cqz, 'SAT' as col_band FROM " . $this->config->item('table_name') . " thcv
-        where station_id = " . $station_id . " and col_cqz <> ''";
+		if ($postdata['band'] == 'All') {
+			$sql .= " union SELECT distinct col_cqz, 'SAT' as col_band FROM " . $this->config->item('table_name') . " thcv
+        	where station_id = " . $station_id . " and col_cqz <> ''";
 
-		$sql .= $this->addBandToQuery('SAT');
+			$sql .= $this->addBandToQuery('SAT');
 
-		$sql .= $this->addQslToQuery($postdata);
+			$sql .= $this->addQslToQuery($postdata);
+		}
 
 		$query = $this->db->query($sql);
 
